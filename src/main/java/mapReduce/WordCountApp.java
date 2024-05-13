@@ -1,4 +1,4 @@
-package com.student.crudapp.hadoop.mapReduce;
+package mapReduce;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -10,6 +10,11 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class WordCountApp {
     public static void main(String[] args) throws Exception {
+
+        // 确保能打印出接收到的参数，检查是否正确传递
+        System.out.println("Input Path: " + args[0]);
+        System.out.println("Output Path: " + args[1]);
+
         if (args.length != 2) {
             System.err.println("Usage: WordCountApp <input path> <output path>");
             System.exit(-1);

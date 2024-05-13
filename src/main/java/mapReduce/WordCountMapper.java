@@ -1,4 +1,4 @@
-package com.student.crudapp.hadoop.mapReduce;
+package mapReduce;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;

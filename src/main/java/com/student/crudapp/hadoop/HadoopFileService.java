@@ -1,5 +1,6 @@
 package com.student.crudapp.hadoop;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -10,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+@Slf4j
 @Service
 public class HadoopFileService {
 
@@ -25,9 +27,9 @@ public class HadoopFileService {
         try (FileSystem fs = FileSystem.get(hadoopConfig)) {
             if (!fs.exists(filePath)) {
                 fs.create(filePath).close(); // 创建文件并立即关闭
-                System.out.println("File created successfully");
+                log.info("File created successfully");
             } else {
-                System.out.println("File already exists");
+                log.info("File already exists");
             }
         } catch (IOException e) {
             e.printStackTrace();
