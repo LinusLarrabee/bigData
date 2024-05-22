@@ -26,8 +26,6 @@ public class FlinkKNN {
         String trainingPath = params.get("trainingData", "hdfs://hadoop:9000/user/sunhao/two_room_data_train.csv");
         String testPath = params.get("testData", "hdfs://hadoop:9000/user/sunhao/two_room_data_test.csv");
 
-
-
         // 读取训练数据
         DataSet<Tuple2<Double, Integer>> trainingData = env.readCsvFile(trainingPath)
                 .fieldDelimiter(",")
@@ -38,25 +36,18 @@ public class FlinkKNN {
                 .fieldDelimiter(",")
                 .types(Double.class, Integer.class);
 
-        // 展示测试数据
-        System.out.println("Test Data:");
-        testData.print();
-
-        // 记录开始时间
-        long startTime = System.currentTimeMillis();
-
         // 对训练数据和测试数据进行标准化处理
         DataSet<Double> trainingRssi = trainingData.map(t -> t.f0).returns(Double.class);
         DataSet<Double> testRssi = testData.map(t -> t.f0).returns(Double.class);
 
-        Double mean = trainingRssi.reduce((a, b) -> a + b).collect().get(0) / trainingRssi.count();
-        Double std = Math.sqrt(trainingRssi.map(v -> Math.pow(v - mean, 2)).reduce((a, b) -> a + b).collect().get(0) / trainingRssi.count());
+        double mean = trainingRssi.reduce((a, b) -> a + b).collect().get(0) / trainingRssi.count();
+        double std = Math.sqrt(trainingRssi.map(v -> Math.pow(v - mean, 2)).reduce((a, b) -> a + b).collect().get(0) / trainingRssi.count());
 
         DataSet<Tuple2<Double, Integer>> normalizedTrainingData = trainingData.map(t -> new Tuple2<>((t.f0 - mean) / std, t.f1)).returns(TypeExtractor.getForObject(new Tuple2<>(0.0, 0)));
         DataSet<Tuple2<Double, Integer>> normalizedTestData = testData.map(t -> new Tuple2<>((t.f0 - mean) / std, t.f1)).returns(TypeExtractor.getForObject(new Tuple2<>(0.0, 0)));
 
         // 设置 k 值
-        int k = 3;
+        int k = 5;
 
         // 广播训练数据
         DataSet<Tuple3<Double, Integer, Integer>> knnResults = normalizedTestData.flatMap(new RichFlatMapFunction<Tuple2<Double, Integer>, Tuple3<Double, Integer, Integer>>() {
@@ -69,7 +60,6 @@ public class FlinkKNN {
 
                     @Override
                     public void flatMap(Tuple2<Double, Integer> testPoint, Collector<Tuple3<Double, Integer, Integer>> out) throws Exception {
-//                        System.out.println("Processing test point: " + testPoint);
                         for (Tuple2<Double, Integer> trainingPoint : trainingPoints) {
                             double distance = Math.abs(trainingPoint.f0 - testPoint.f0);
                             out.collect(new Tuple3<>(distance, trainingPoint.f1, testPoint.f1));
@@ -80,10 +70,6 @@ public class FlinkKNN {
                 .groupBy(2) // 按测试点分组
                 .sortGroup(0, Order.ASCENDING) // 按距离排序
                 .first(k); // 取前 k 个最近邻
-
-//        // 打印中间结果 knnResults
-//        System.out.println("KNN Results:");
-//        knnResults.print();
 
         // 多数投票确定分类结果
         DataSet<Tuple2<Integer, Integer>> predictions = knnResults
@@ -105,29 +91,30 @@ public class FlinkKNN {
                         } else if (counts[1] > counts[0]) {
                             predictedLabel = 2;
                         } else {
-                            predictedLabel = counts[0] > 0 ? 1 : 2; // 处理平局情况，可以根据需求修改
+                            predictedLabel = 1; // 在平局情况下，选择类别 1
                         }
                         out.collect(new Tuple2<>(testLabel, predictedLabel));
                     }
                 }).returns(TypeExtractor.getForObject(new Tuple2<>(0, 0)));
 
+        // 确保预测结果与测试数据总量一致
+        DataSet<Tuple2<Integer, Integer>> finalPredictions = testData.leftOuterJoin(predictions)
+                .where(1).equalTo(0)
+                .with((test, prediction) -> prediction == null ? new Tuple2<>(test.f1, 0) : prediction)
+                .returns(TypeExtractor.getForObject(new Tuple2<>(0, 0)));
+
         // 打印预测结果
         System.out.println("Predictions:");
-        predictions.print();
+        finalPredictions.print();
 
         // 计算准确率
-        long correct = predictions.filter(t -> t.f0.equals(t.f1)).count();
-        long total = predictions.count();
+        long correct = finalPredictions.filter(t -> t.f0.equals(t.f1)).count();
+        long total = finalPredictions.count();
 
         double accuracy = (double) correct / total;
         System.out.println("Accuracy: " + accuracy);
 
-        // 记录结束时间
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
 
-        // 输出运行时间
-        System.out.println("Time taken: " + duration + " milliseconds");
 
         // 执行 Flink 作业
         env.execute("Flink KNN");
