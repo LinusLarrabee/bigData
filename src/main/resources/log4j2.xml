@@ -14,12 +14,34 @@
     <!-- Loggers 定义日志生成器 -->
     <Loggers>
         <!-- 根日志生成器 -->
-        <Root level="info">
+        <Root level="warn">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Root>
         <!-- 添加具体的日志生成器，可以单独为某个包或类设置日志级别和输出目的地 -->
         <Logger name="com.example.myapp" level="debug" additivity="false">
+            <AppenderRef ref="File"/>
+        </Logger>
+        <!-- Suppress the logging of Flink's internal components -->
+        <Logger name="org.apache.flink" level="error" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+        <Logger name="org.apache.hadoop" level="error" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+        <Logger name="org.apache.zookeeper" level="error" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+        <Logger name="org.apache.kafka" level="error" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
+        <!-- 添加特定的类来抑制 WARN 消息 -->
+        <Logger name="org.apache.flink.metrics.MetricGroup" level="error" additivity="false">
+            <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Logger>
     </Loggers>

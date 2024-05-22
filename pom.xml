@@ -15,7 +15,7 @@
     <description>crudapp</description>
     <properties>
         <java.version>1.8</java.version>
-        <flink.version>1.19.0</flink.version>
+        <flink.version>1.13.2</flink.version>
     </properties>
     <dependencies>
         <dependency>
@@ -148,6 +148,7 @@
         </dependency>
 
 
+        <!-- Apache Flink dependencies -->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>
@@ -155,9 +156,27 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-streaming-java</artifactId>
+            <artifactId>flink-streaming-java_2.11</artifactId>
             <version>${flink.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_2.11</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-core</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
+        <!-- Flink shaded Guava dependency -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-shaded-guava</artifactId>
+            <version>18.0-8.0</version>
+        </dependency>
+
 
     </dependencies>
 
