@@ -52,7 +52,8 @@ object FlinkLinkAnalysis {
           .keyBy(_.user_id)
           .window(TumblingEventTimeWindows.of(Time.seconds(10)))
           .process(new ProcessWindowFunction[UserVisit, UserPath, Int, TimeWindow] {
-              override def process(key: Int, context: Context, elements: Iterable[UserVisit], out: Collector[UserPath]): Unit = {
+              override def process(key: Int, context: Context, elements: Iterable[UserVisit],
+                                   out: Collector[UserPath]): Unit = {
                   val path = elements.toList.sortBy(_.timestamp).map(_.page).mkString("->")
                   out.collect(UserPath(key, path))
               }
