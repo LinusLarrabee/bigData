@@ -8,7 +8,7 @@ spark-submit --deploy-mode cluster --master yarn s3://linkanalysis/data2.py s3a:
 
 ### 框架1：Docker分布式构建
 
-![image-20240606193642791](img/posts/AWS Config.asserts/image-20240606193642791.png)
+![image-20240607105232930](img/posts/AWS Config.asserts/image-20240607105232930.png)
 
 数据源有多种形式，然后使用Notebook编写代码，在Spark集群上执行，Spark访问数据源，然后集群中还需要单独的Python环境，数据通过数据库同步到Superset展示。
 
@@ -50,7 +50,7 @@ file_content = response['Body'].read().decode('utf-8')
 
 ### 框架2: AWS Basic
 
-![image-20240606193437040](img/posts/AWS Config.asserts/image-20240606193437040.png)
+![image-20240607105341849](img/posts/AWS Config.asserts/image-20240607105341849.png)
 
 AWS提供了一个良好的操作平台，耦合了中间这些组件的连接问题，读取写入文件都非常简单。
 
@@ -69,7 +69,9 @@ df.select("uvi", "transformed_path").write.csv(output_path, header=True)
 
 ### 框架3: AWS Dev预期
 
-![image-20240606194026512](img/posts/AWS Config.asserts/image-20240606194026512.png)
+![image-20240607105301743](img/posts/AWS Config.asserts/image-20240607105301743.png)
+
+
 
 
 
@@ -77,7 +79,7 @@ df.select("uvi", "transformed_path").write.csv(output_path, header=True)
 
 
 
-![image-20240606194210746](img/posts/AWS Config.asserts/image-20240606194210746.png)
+![image-20240607105250128](img/posts/AWS Config.asserts/image-20240607105250128.png)
 
 
 
