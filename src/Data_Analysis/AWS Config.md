@@ -1,8 +1,75 @@
 usage
 
-spark-submit --deploy-mode cluster --master yarn s3://linkanalysis/data2.py s3a://linkanalysis/input1.txt s3a://linkanalysis/ooutput/output.csv
 
- 
+
+# 使用方法：
+
+使用spark无非就是作业提交，notebook调用；然后AWS封装了一层Add Steps
+
+## Ssh & Notebook（公司防火墙限制）
+
+### 通用方式
+
+![image-20240607124421436](img/posts/AWS Config.asserts/image-20240607124421436.png)
+
+首先需要在EC2的界面创建Key Pairs，然后在EMR配置中配置这个Key Pairs
+
+![image-20240607124743428](img/posts/AWS Config.asserts/image-20240607124743428.png)
+
+生成集群后打开shell使用ssh，即可访问EMR节点。
+
+```shell
+% 这段的意思是使用test1.pem访问这个aws集群地址，用户是hadoop，并将本地的8157端口映射到集群的8888端口
+
+$ ssh -i /Users/sunhao/Downloads/test1.pem -L 8157:localhost:8888 hadoop@ec2-54-226-254-227.compute-1.amazonaws.com
+
+
+% 这段是spark的执行操作，执行文件data2.py，输入参数为input1.txt，输出到output.csv
+spark-submit --deploy-mode cluster --master yarn s3://linkanalysis/data2.py s3a://linkanalysis/input1.txt s3a://linkanalysis/ooutput/output.csv
+```
+
+进入节点之后可以安装Notebook组件，安装完通过端口映射的方式可以在本地端口访问，当然了AWS也提供了EMR Studio能够使用notebook，不过一来没有权限，二来应该要另外花钱。
+
+### 其他方式：
+
+**使用Apache Livy提交作业**：
+
+- Livy是一个开源的Spark作业服务器，提供了REST接口，可以用来提交和管理Spark作业。可以在EMR集群上安装Livy，通过HTTP请求提交Spark作业。
+
+**通过自动化工具（如Airflow或Oozie）**：
+
+- 可以使用Airflow或Oozie等工作流调度工具，自动化提交和管理Spark作业。这些工具可以与EMR集群集成，通过API提交Spark作业。
+
+
+
+
+
+## AWS Steps
+
+### 使用EMR控制台提交步骤（Steps）：
+
+- 通过AWS管理控制台，可以在EMR集群上添加步骤来运行Spark作业。可以指定脚本文件的位置（例如S3），以及相应的参数。
+- 
+
+### 使用AWS CLI提交步骤：
+
+- 应该需要创建AK/SK，未尝试
+
+- 使用AWS命令行界面（CLI），可以通过
+
+  ```
+  aws emr add-steps
+  ```
+
+  命令将Spark作业添加到正在运行的EMR集群。例如：
+
+  ```bash
+  aws emr add-steps --cluster-id <cluster-id> --steps Type=Spark,Name="Spark Program",ActionOnFailure=CONTINUE,Args=[--deploy-mode,cluster,--class,org.apache.spark.examples.SparkPi,s3://<bucket>/path/to/your.jar,10]
+  ```
+
+- 
+
+
 
 组件选择：
 
