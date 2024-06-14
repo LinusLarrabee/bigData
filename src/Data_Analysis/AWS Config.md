@@ -1,5 +1,15 @@
 usage
 
+aws s3 cp s3://linkanalysis/AddResponseHeaderFilter.java  /home/hadoop/
+
+
+
+aws s3 cp s3://linkanalysis/src /home/hadoop/ --recursive
+
+
+
+spark-submit --jars s3://path/to/presto-jdbc-driver.jar your_spark_script.py
+
 
 
 # 使用方法：
