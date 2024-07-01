@@ -1,110 +1,50 @@
-**You:**
+### Docker创建
 
-如何使用ec2构建superset访问
+将下述文件保存，并执行docker创建
 
-* * *
+```bash
+#!/bin/bash
 
-**ChatGPT:**
+# 更新包索引
+sudo yum update -y
 
-要在Amazon EC2上构建并访问Superset，您可以按照以下步骤操作：
+# 安装 Docker
+sudo amazon-linux-extras install docker -y
 
-1. **启动EC2实例**：
-  
-    * 登录到AWS管理控制台。
-    * 导航到EC2服务并启动一个新实例。
-    * 选择合适的Amazon Machine Image (AMI)，例如Amazon Linux 2或Ubuntu。
-    * 选择实例类型，推荐选择至少t2.medium以确保有足够的内存和CPU资源。
-    * 配置实例详细信息并确保安全组允许端口8088（Superset默认端口）和22（SSH）开放。
-    * 添加存储并启动实例。
-    
-2. **连接到实例**：
-  
-    * 使用SSH连接到您的EC2实例。命令如下：
-      
-        ```sh
-        ssh -i /path/to/your-key.pem ec2-user@your-ec2-public-ip
-        ```
-        
-    * 替换`/path/to/your-key.pem`为您的密钥文件路径，`ec2-user`为您的用户名（如果是Ubuntu实例，则是`ubuntu`用户），`your-ec2-public-ip`为您的实例的公有IP地址。
-    
-3. **安装依赖项**：
-  
-    * 更新软件包列表并安装必要的依赖项：
-      
-        ```sh
-        sudo yum update -y
-        sudo yum install -y git gcc gcc-c++ make python3 python3-pip
-        ```
+# 启动 Docker 服务
+sudo service docker start
 
-4. **设置Python环境**：
-  
-    * 确保Python 3已经安装，然后使用`pip3`安装virtualenv：
-      
-        ```sh
-        sudo pip3 install virtualenv
-        ```
-        
-    * 创建并激活一个virtualenv：
-      
-        ```sh
-        mkdir superset
-        cd superset
-        virtualenv venv
-        source venv/bin/activate
-        ```
-    
-5. **安装并设置Superset**：
-  
-    * 使用`pip`安装Superset：
-      
-        ```sh
-        pip install apache-superset
-        ```
-        
-    * 初始化Superset数据库：
-      
-        ```sh
-        superset db upgrade
-        ```
-        
-    * 创建一个管理员用户：
-      
-        ```sh
-        export FLASK_APP=superset
-        superset fab create-admin --username admin --firstname Admin --lastname User --email admin@example.com --password admin
-        ```
-        
-    * 初始化Superset：
-      
-        ```sh
-        superset init
-        ```
-    
-6. **运行Superset**：
-  
-    * 启动Superset服务器：
-      
-        ```sh
-        superset run -p 8088 --with-threads --reload --debugger
-        ```
-        
-    * 现在Superset应该在您的EC2实例的8088端口上运行。
-7. **配置安全组**：
-  
-    * 确保您的EC2实例的安全组允许访问端口8088。可以在AWS管理控制台的EC2实例设置中，编辑安全组，添加入站规则以允许来自您的IP地址的流量。
-8. **访问Superset**：
-  
-    * 在您的浏览器中，输入您的EC2实例的公有IP地址和端口8088，例如：
-      
-        ```vbnet
-        http://your-ec2-public-ip:8088
-        ```
-        
-    * 使用之前创建的管理员账号登录。
+# 将当前用户添加到 Docker 组
+sudo usermod -aG docker $USER
 
-如果您有任何其他问题或需要进一步的帮助，请告诉我！
+# 提示用户重新登录以应用组更改
+echo "Docker 安装完成。请重新登录以应用组更改。"
 
-* * *
+```
+
+
+
+```bash
+# 创建脚本文件
+nano install_docker.sh
+
+# 粘贴脚本内容并保存
+
+
+# 运行脚本
+./install_docker.sh
+
+# 重新登录以应用组更改
+exit
+
+# 重新连接后查看 Docker 容器
+docker ps
+
+```
+
+
+
+
 
 **You:**
 
@@ -144,17 +84,8 @@ EC2本身并不是容器化的，但您可以在EC2实例上使用容器化技�
         sudo usermod -a -G docker ec2-user
         ```
         
-    * 在Ubuntu上，运行以下命令：
-      
-        ```sh
-        sudo apt-get update
-        sudo apt-get install docker.io -y
-        sudo systemctl start docker
-        sudo usermod -aG docker ubuntu
-        ```
+    * **拉取并运行Superset的Docker镜像**：
     
-4. **拉取并运行Superset的Docker镜像**：
-  
     * 重新连接到您的实例以应用组更改，然后运行以下命令拉取并启动Superset容器：
       
         ```sh

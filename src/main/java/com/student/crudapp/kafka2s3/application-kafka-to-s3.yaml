@@ -1,0 +1,21 @@
+kafka-to-s3:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    topic: ${KAFKA_TO_S3_DATA_COLLECTOR_TOPICS:tauc.data.collector.topics}
+    group-id: ${KAFKA_TO_S3_TOPIC_DATA_COLLECTOR_EVENT_GROUPID:directS3}
+    key-deserializer: ${KAFKA_TO_S3_KEY_DESERIALIZER:org.apache.kafka.common.serialization.StringDeserializer}
+    value-deserializer: ${KAFKA_TO_S3_VALUE_DESERIALIZER:org.apache.kafka.common.serialization.StringDeserializer}
+    auto-offset-reset: ${KAFKA_TO_S3_AUTO_OFFSET_RESET:earliest}
+    enable-auto-commit: ${KAFKA_TO_S3_ENABLE_AUTO_COMMIT:false}
+    poll-duration-ms: ${KAFKA_TO_S3_POLL_DURATION_MS:1000}
+    max-poll-records: ${KAFKA_TO_S3_MAX_POLL_RECORDS:50}
+  s3:
+    bucket-name: ${KAFKA_TO_S3_BUCKET_NAME:your-bucket-name}
+    prefix: ${KAFKA_TO_S3_PREFIX:your/prefix/path/}  # 确保以斜杠结尾
+    access-key: ${AWS_ACCESS_KEY_ID:your-access-key}
+    secret-key: ${AWS_SECRET_KEY:your-secret-key}
+    env: ${CURRENT_ENV:uat-aps1/}  # 格式为 {environment}-{region}/
+    region: ${AWS_REGION:us-east-1}
+  time-zone: ${KAFKA_TO_S3_TIME_ZONE:UTC}
+  max-batch-size: ${KAFKA_TO_S3_MAX_BATCH_SIZE:20}
+  max-file-size: ${KAFKA_TO_S3_MAX_FILE_SIZE:1048576}  # 1MB = 1048576 bytes

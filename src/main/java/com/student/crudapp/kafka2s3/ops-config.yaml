@@ -1,0 +1,76 @@
+# platform cloud
+PLATFORM_CLOUD_DEFAULT_APP_SERVER_URL: https://n-aps1-wap-beta.tplinkcloud.com
+PLATFORM_CLOUD_EMAIL_CONFIG_FROM_ADDRESS: noreply@tplinkcloud.com
+PLATFORM_CLOUD_DEFAULT_ALI_SERVER_URL: https://n-aps1-beta-wap-bizserver.tplinkcloud.com
+PLATFORM_CLOUD_SERVICE_ID: nbu.event.dcmp
+PLATFORM_CLOUD_CURRENT_REGION: ap-southeast-1
+PLATFORM_CLOUD_REGION_MONITOR_PATH: ${app.config.dir}/tp_cloud_url_map.json
+PLATFORM_CLOUD_ALI_REGION_MONITOR_PATH: ${app.config.dir}/tp_ali2_cloud_region_map.json
+
+# kafka topic
+KAFKA_TOPIC_DATA_COLLECTOR_EVENT_NAME: tpuc.data.collector
+KAFKA_TOPIC_DATA_COLLECTOR_EVENT_GROUPID: tauc-data-collector-group
+SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka-migrate-aps1-headless.base-service.svc.cluster.local:9092
+
+##REDIS Config
+REDISSION_MODE: singleserver
+REDIS_URL: 172.29.89.69:6379
+REDIS_DATABASE: 1
+REDIS_PASSWORD: se21oPew238q921X
+
+# platform_cloud
+COLLECTOR_UPLOAD_URL_SERVER: https://n-da-beta.tplinkcloud.com
+COLLECTOR_UPLOAD_URL_PORT: /api/v2/data/web/uploadBasicData
+APS1_DATA_COLLECTOR_UPLOAD_URL:
+USE1_DATA_COLLECTOR_UPLOAD_URL:
+EUW1_DATA_COLLECTOR_UPLOAD_URL:
+APS1_PLATFORM_UPLOAD_URL:
+USE1_PLATFORM_UPLOAD_URL:
+EUW1_PLATFORM_UPLOAD_URL:
+DEFAULT_PLATFORM_UPLOAD_URL:
+
+
+# http-response
+# 仅逗号无需空格分割
+HTTP_RESPONSE_WHITE_LIST_SWITCH: true
+HTTP_RESPONSE_WHITE_LIST: https://tauc-staging.tplinkcloud.com
+  
+# Kafka Configuration
+KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+KAFKA_TO_S3_DATA_COLLECTOR_TOPICS: tauc.data.collector.topics
+KAFKA_TO_S3_TOPIC_DATA_COLLECTOR_EVENT_GROUPID: directS3
+KAFKA_TO_S3_KEY_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+KAFKA_TO_S3_VALUE_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+KAFKA_TO_S3_AUTO_OFFSET_RESET: earliest
+KAFKA_TO_S3_ENABLE_AUTO_COMMIT: false
+KAFKA_TO_S3_POLL_DURATION_MS: 1000
+KAFKA_TO_S3_MAX_POLL_RECORDS: 50
+
+# S3 Configuration
+KAFKA_TO_S3_BUCKET_NAME: your-bucket-name
+KAFKA_TO_S3_PREFIX: your/prefix/path/  # 确保以斜杠结尾
+AWS_ACCESS_KEY_ID: your-access-key
+AWS_SECRET_KEY: your-secret-key
+CURRENT_ENV: uat-aps1  # 新增环境配置，格式为 {environment}-{region}
+AWS_REGION: us-east-1  # 新增AWS区域配置
+
+# Batch Size
+KAFKA_TO_S3_KAFKA_BATCH_SIZE: 50
+KAFKA_TO_S3_MAX_BATCH_SIZE: 50
+
+# Time Zone
+KAFKA_TO_S3_TIME_ZONE: UTC
+
+
+# Max File Size
+KAFKA_TO_S3_MAX_FILE_SIZE: 1048576  # 1MB = 1048576 bytes
+
+
+## Apollo 配置 DEV环境的配置见 cicd gerrit配置, 本地启动要使用apollo见readme
+#APOLLO_ENV: DEV
+#APOLLO_CLUSTER: dev-aps1
+#APOLLO_BOOTSTRAP_EAGERLOAD_ENABLE: false
+#APOLLO_BOOTSTRAP_ENABLED: true
+#APOLLO_BOOTSTRAP_NAMESPACES: application-apollo-ops-config.yaml,application
+#APOLLO_ACCESSKEY_SECRET: 402643babe7c4d0eb76af5553e190bb1
+#APOLLO_APP_ID: tauc-data-collector
