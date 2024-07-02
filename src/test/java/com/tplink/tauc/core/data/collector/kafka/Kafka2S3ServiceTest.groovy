@@ -1,6 +1,7 @@
 package com.tplink.tauc.core.data.collector.kafka
 
 import com.amazonaws.services.s3.AmazonS3
+import com.student.crudapp.kafka2s3.Kafka2S3Props
 import com.student.crudapp.kafka2s3.Kafka2S3Service
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -31,7 +32,7 @@ class Kafka2S3ServiceTest extends Specification {
         def factory = new DetachedMockFactory()
 
         @Bean
-        com.student.crudapp.kafka2s3.Kafka2S3Props kafka2S3Props() {
+        Kafka2S3Props kafka2S3Props() {
             return factory.Mock(Kafka2S3Props)
         }
 
