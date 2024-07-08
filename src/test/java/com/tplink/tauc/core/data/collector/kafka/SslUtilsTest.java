@@ -16,6 +16,7 @@ import javax.net.ssl.SSLSession;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class SslUtilsTest {
@@ -42,10 +43,11 @@ public class SslUtilsTest {
     }
 
     @Test
-    public void testHostnameVerifierInIgnoreSsl() {
+    public void testHostnameVerifierInIgnoreSsl() throws Exception {
         HostnameVerifier hv = (hostname, session) -> true;
         SSLSession sslSession = mock(SSLSession.class);
-        // Removing unnecessary stubbing
+        when(sslSession.getPeerHost()).thenReturn("peerHost");
+
         boolean result = hv.verify("testHost", sslSession);
 
         assertTrue(result);
