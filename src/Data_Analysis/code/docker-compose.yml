@@ -1,0 +1,36 @@
+version: '3.1'
+services:
+  postgres:
+    image: postgres:13
+    container_name: superset_postgres
+    environment:
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_DB: superset
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - superset_network
+
+  superset:
+    image: apache/superset
+    container_name: superset_app
+    environment:
+      SUPERSET_ENV: production
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+    volumes:
+      - superset_home:/app/superset_home
+      - ./superset_config.py:/app/pythonpath/superset_config.py  # 挂载配置文件路径
+    ports:
+      - "8088:8088"
+    depends_on:
+      - postgres
+    networks:
+      - superset_network
+
+volumes:
+  postgres_data:
+  superset_home:
+
+networks:
+  superset_network:

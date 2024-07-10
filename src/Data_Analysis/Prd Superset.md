@@ -1,3 +1,95 @@
+
+
+## Supreset生产配置
+
+Superset的日志指出，在生产上需要配置的内容为：Redis，WSGI，PostgreSql
+
+| 组件          | 开发环境使用方式                     | 生产环境转化过程                                             |
+| ------------- | ------------------------------------ | ------------------------------------------------------------ |
+| Flask-Limiter | 使用内存作为速率限制的存储后端       | 配置并使用Redis等外部存储后端，以支持多服务器环境和持久化    |
+| Werkzeug      | 使用内置的开发服务器，便于调试和测试 | 替换为生产级WSGI服务器（如Gunicorn）以处理高并发和高负载     |
+| SQLite        | 作为元数据数据库，便于快速开发和测试 | 迁移到更强大的数据库系统（如PostgreSQL或MySQL）以提高性能和扩展性 |
+
+其中redis和Gunicorn都是为了高可用，感觉节约资源可以不配。新建一个数据库存放账户信息和所有的chart图表信息，和前端的superset做分离还是有必要的。
+
+## Postgres
+
+使用原因：生产环境使用内置SQLite性能和安全太弱，需要引入其他数据库。
+
+PostgreSql配置上经常配了初始密码就难以登陆，不配置初始密码又不确切密码格式，采用的是初始密码配一套A去库里拿数据，然后不设置初始密码B在库里写A的帐密信息。最后能得到一个能启动能配密码的系统。
+
+注意，superset密码保存只保存加密后的密码，因此不具备账号恢复密码的可能性，只能删掉重来。
+
+代码可参考文件，需要docker-compose.yml和superset_config.py，前者提供两个版本，分别对应带密码和不带密码的。
+
+
+
+然后PSQL保存superset的所有信息，方便进行数据备份
+
+```postgresql
+INSERT INTO ab_user (id, username, password, email, first_name, last_name, active, created_on, changed_on)
+VALUES (nextval('ab_user_id_seq'), 'admin', 'pbkdf2:sha256:600000$VJ1fRaQZo5Qg1iko$6d5bad7bfcc23ebe87031049e6f4c63da40c66c1d6138bd39876981a24f8f21b ', 'admin@example.com', 'Admin', 'User', True, current_timestamp, current_timestamp);
+
+INSERT INTO ab_user (id, username, password, email, first_name, last_name, active, created_on, changed_on)
+VALUES (nextval('ab_user_id_seq'), 'admin', 'pbkdf2:sha256:600000$VJ1fRaQZo5Qg1iko$6d5bad7bfcc23ebe87031049e6f4c63da40c66c1d6138bd39876981a24f8f21b', 'admin@example.com', 'Admin', 'User', True, current_timestamp, current_timestamp);
+```
+
+
+
+### WSGI
+
+```shell
+superset-1  | 2024-07-08 14:02:25,210:INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+```
+
+在Dockerfile增加下述内容即可
+
+```dockerfile
+RUN pip install gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:8088", "superset.app:create_app()"]
+```
+
+
+
+### Redis
+
+```
+superset-1  | 2024-07-08 14:02:17,044:INFO:root:Configured event logger of type <class 'superset.utils.log.DBEventLogger'>
+superset-1  | /usr/local/lib/python3.10/site-packages/flask_limiter/extension.py:293: UserWarning: Using the in-memory storage for tracking rate limits as no storage was explicitly specified. This is not recommended for production use. See: https://flask-limiter.readthedocs.io#configuring-a-storage-backend for documentation about configuring the storage backend.
+superset-1  |   warnings.warn(
+```
+
+
+
+### 后续部署
+
+是否需要挂到K8s上实现高可用：考虑目前计划开放内部及产品使用，单机部署即可。
+
+
+
+### 常用命令
+
+```shell
+#查看容器日志
+docker logs -f superset
+docker logs -f postgre
+
+# 带环境参数启动容器
+sudo docker-compose --env-file initial_var.env up -d
+
+# 容器内部执行
+
+docker exec -it test3-superset-1 superset db upgrade 
+docker exec -it test3-superset-1 superset init
+docker exec -it test3-postgres-1 psql -U superset -d superset
+```
+
+
+
+
+
+## 使用Gpt部署EC2 on Superset
+
 ### Docker创建
 
 将下述文件保存，并执行docker创建
