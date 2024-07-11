@@ -194,6 +194,4 @@ https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-fs.html
 4. 接入业务数据源
 5. 数据展示部分成本管理
 
-
-
-![image-20240628114408444](img/posts/dev全流程评审.asserts/image-20240628114408444.png)
+1. 
