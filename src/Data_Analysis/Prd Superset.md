@@ -12,6 +12,76 @@ Superset的日志指出，在生产上需要配置的内容为：Redis，WSGI，
 
 其中redis和Gunicorn都是为了高可用，感觉节约资源可以不配。新建一个数据库存放账户信息和所有的chart图表信息，和前端的superset做分离还是有必要的。
 
+
+
+## 手动创建账户
+
+我能否通过superset的命令行创建一个admin
+
+
+
+ChatGPT
+
+可以通过 Superset 命令行工具（Superset CLI）来创建一个管理员用户。以下是详细步骤：
+
+### 使用 Superset CLI 创建管理员用户
+
+1. **进入 Superset 容器**
+
+   首先，需要进入运行 Superset 的 Docker 容器：
+
+   ```
+   bash
+   Copy code
+   docker exec -it <superset_container_id> /bin/bash
+   ```
+
+   你可以使用 `docker ps` 命令来获取 Superset 容器的 ID：
+
+   ```
+   bash
+   Copy code
+   docker ps
+   ```
+
+2. **使用 `superset fab create-admin` 命令创建管理员用户**
+
+   在容器内，使用以下命令创建一个管理员用户：
+
+   ```
+   bash
+   Copy code
+   superset fab create-admin \
+     --username sunhao \
+     --firstname Admin \
+     --lastname User1 \
+     --email sunhao@example.com \
+     --password sunhao
+   ```
+
+   这个命令会创建一个名为 `admin` 的用户，并设置其电子邮件为 `admin@example.com`，密码为 `admin`。
+
+3. **初始化数据库**
+
+   如果这是你第一次运行 Superset，还需要初始化数据库：
+
+   ```
+   bash
+   Copy code
+   superset db upgrade
+   ```
+
+4. **启动 Superset**
+
+   确保 Superset 正常启动：
+
+   ```
+   bash
+   Copy code
+   superset init
+   superset run -p 8088 --with-threads --reload --debugger
+   ```
+
 ## Postgres
 
 使用原因：生产环境使用内置SQLite性能和安全太弱，需要引入其他数据库。
@@ -28,13 +98,26 @@ PostgreSql配置上经常配了初始密码就难以登陆，不配置初始密�
 
 ```postgresql
 INSERT INTO ab_user (id, username, password, email, first_name, last_name, active, created_on, changed_on)
-VALUES (nextval('ab_user_id_seq'), 'admin', 'pbkdf2:sha256:600000$VJ1fRaQZo5Qg1iko$6d5bad7bfcc23ebe87031049e6f4c63da40c66c1d6138bd39876981a24f8f21b ', 'admin@example.com', 'Admin', 'User', True, current_timestamp, current_timestamp);
+VALUES (nextval('ab_user_id_seq'), 'admin', 'pbkdf2:sha256:600000$VJ1fRaQZo5Qg1iko$6d5bad7bfcc23ebe87031049e6f4c63da40c66c1d6138bd39876981a24f8f21b', 'admin@example.com', 'Admin', 'User', True, current_timestamp, current_timestamp);
 
 INSERT INTO ab_user (id, username, password, email, first_name, last_name, active, created_on, changed_on)
-VALUES (nextval('ab_user_id_seq'), 'admin', 'pbkdf2:sha256:600000$VJ1fRaQZo5Qg1iko$6d5bad7bfcc23ebe87031049e6f4c63da40c66c1d6138bd39876981a24f8f21b', 'admin@example.com', 'Admin', 'User', True, current_timestamp, current_timestamp);
+VALUES (nextval('ab_user_id_seq'), 'admin', ' scrypt:32768:8:1$Coos3han96PQwBBf$3035cf6e89602df000728619b18e1d5e9e54d83874eacdf0bc2ed68b0d89966c09a80064ff10fc8f834848793ab119962e81048271d14b666c43802227678c5b ', 'admin@example.com', 'Admin', 'User', True, current_timestamp, current_timestamp);
+
+INSERT INTO ab_user (username, password, email, first_name, last_name, active, created_on, changed_on)
+VALUES ('admin1', ' scrypt:32768:8:1$kD3Dw7EfsqA1xo3N$715b7e3919226aca1efc57dd811cd22571c43107088d268e261b3dc2feb12cb7a56c7f2d9fd0981725db8bad91d054615be9ae4380cd652c04dc31b46434c1b3', 'admin1@example.com', 'Admin1', 'User1', True, current_timestamp, current_timestamp);
+
 ```
 
 
+
+
+
+superset fab create-admin \
+  --username admin1 \
+  --firstname Admin1 \
+  --lastname User1 \
+  --email admin1@example.com \
+  --password admin
 
 ### WSGI
 
