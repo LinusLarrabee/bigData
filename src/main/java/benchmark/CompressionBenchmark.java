@@ -45,43 +45,52 @@ public class CompressionBenchmark {
     }
 
     public static long[] measureBzip2(byte[] input) throws IOException {
+        // Compress using Bzip2
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         BZip2CompressorOutputStream bzip2OutputStream = new BZip2CompressorOutputStream(byteArrayOutputStream);
 
         long startTime = System.nanoTime();
         bzip2OutputStream.write(input);
         bzip2OutputStream.close();
-        long endTime = System.nanoTime();
+        long compressEndTime = System.nanoTime();
 
         byte[] compressedData = byteArrayOutputStream.toByteArray();
-        long compressTime = endTime - startTime;
 
-        startTime = System.nanoTime();
-        BZip2CompressorInputStream bzip2InputStream = new BZip2CompressorInputStream(new ByteArrayInputStream(compressedData));
+        // Decompress using Bzip2
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(compressedData);
+        BZip2CompressorInputStream bzip2InputStream = new BZip2CompressorInputStream(byteArrayInputStream);
+
+        long decompressStartTime = System.nanoTime();
         while (bzip2InputStream.read() != -1) {}
+        long decompressEndTime = System.nanoTime();
+
         bzip2InputStream.close();
-        endTime = System.nanoTime();
-        long decompressTime = endTime - startTime;
+
+        long compressTime = compressEndTime - startTime;
+        long decompressTime = decompressEndTime - decompressStartTime;
 
         return new long[]{compressTime, decompressTime, compressedData.length};
     }
 
     public static long[] measureSnappy(byte[] input) throws IOException {
+        // Compress using Snappy
         long startTime = System.nanoTime();
         byte[] compressedData = Snappy.compress(input);
-        long endTime = System.nanoTime();
-        long compressTime = endTime - startTime;
+        long compressEndTime = System.nanoTime();
 
-        startTime = System.nanoTime();
+        // Decompress using Snappy
+        long decompressStartTime = System.nanoTime();
         byte[] decompressedData = Snappy.uncompress(compressedData);
-        endTime = System.nanoTime();
-        long decompressTime = endTime - startTime;
+        long decompressEndTime = System.nanoTime();
+
+        long compressTime = compressEndTime - startTime;
+        long decompressTime = decompressEndTime - decompressStartTime;
 
         return new long[]{compressTime, decompressTime, compressedData.length};
     }
 
     public static void main(String[] args) throws IOException {
-        String filePath = "/Users/sunhao/message.txt"; // 替换为你的文件路径
+        String filePath = "/Users/sunhao/benchmark.txt"; // 替换为你的文件路径
         byte[] fileData = readFile(filePath);
 
         System.out.println("Original file size: " + fileData.length + " bytes");
