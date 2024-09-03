@@ -1,9 +1,9 @@
 package benchmark;
 
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.xerial.snappy.Snappy;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.GZIPOutputStream;
 
@@ -17,42 +17,42 @@ public class CompressionBenchmark {
         return data;
     }
 
-    private static long measureGzip(byte[] input) throws IOException {
+    private static long measureGzip(byte[] input, String outputPath) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
         long startTime = System.nanoTime();
         gzipOutputStream.write(input);
         gzipOutputStream.close();
         long endTime = System.nanoTime();
+
+        // Save compressed data to a file
+        try (FileOutputStream fileOutputStream = new FileOutputStream(outputPath)) {
+            fileOutputStream.write(byteArrayOutputStream.toByteArray());
+        }
+
         return endTime - startTime;
     }
 
-    private static long measureBzip2(byte[] input) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        BZip2CompressorOutputStream bzip2OutputStream = new BZip2CompressorOutputStream(byteArrayOutputStream);
-        long startTime = System.nanoTime();
-        bzip2OutputStream.write(input);
-        bzip2OutputStream.close();
-        long endTime = System.nanoTime();
-        return endTime - startTime;
-    }
-
-    private static long measureSnappy(byte[] input) throws IOException {
+    private static long measureSnappy(byte[] input, String outputPath) throws IOException {
         long startTime = System.nanoTime();
         byte[] compressed = Snappy.compress(input);
         long endTime = System.nanoTime();
+
+        // Save compressed data to a file
+        try (FileOutputStream fileOutputStream = new FileOutputStream(outputPath)) {
+            fileOutputStream.write(compressed);
+        }
+
         return endTime - startTime;
     }
 
     public static void main(String[] args) throws IOException {
-        byte[] sampleData = generateSampleData(3); // 2.64KB = ~3KB, slightly rounded up
+        byte[] sampleData = generateSampleData(6000); // 2.64KB = ~3KB, slightly rounded up
 
-        long gzipTime = measureGzip(sampleData);
-//        long bzip2Time = measureBzip2(sampleData);
-        long snappyTime = measureSnappy(sampleData);
+        long gzipTime = measureGzip(sampleData, "gzip_output.gz");
+        long snappyTime = measureSnappy(sampleData, "snappy_output.snappy");
 
         System.out.println("Gzip compression time: " + (gzipTime / 1_000_000.0) + " ms");
-//        System.out.println("Bzip2 compression time: " + (bzip2Time / 1_000_000.0) + " ms");
         System.out.println("Snappy compression time: " + (snappyTime / 1_000_000.0) + " ms");
     }
 }
