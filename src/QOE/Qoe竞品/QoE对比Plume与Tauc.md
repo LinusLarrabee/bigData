@@ -1,48 +1,68 @@
-# plume的qoe展示
+# Frontline页面
 
-非常正常，按概览，ap，sta，wan口
+## Pods & Nodes & Device
 
-## 概览
+### Pods & Nodes
+
+Plume对于Controller设备没有Qoe的定义，或者换句话说，就是下面这些指标的定义在Plume里属于基础网络信息范畴。
+
+![image-20250304142053411](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250304142053411.png)
+
+
+
+![image-20250304142742080](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250304142742080.png)
+
+
+
+![image-20250304143528300](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250304143528300.png)
+
+### Device
+
+device界面和Pods Nodes界面相似
+
+![image-20250304181426276](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250304181426276.png)
+
+此处的Qoe History
+
+Per Client(理论上应该是Per Radio Per Client，如果有多Radio连接的话)，这些其实都是Qoe数据，因此不单独罗列。
+
+
+
+## Qoe
+
+按概览，ap，sta，wan口
+
+### 概览
 
 概览展示qoe给分，ap和sta各一个分数，这个分数其实也没什么实际意义。
+
+维度解析：ap，sta有总分分值。维度是基于频段的（具体而言下图iPhone手机会同一个时间出现三个点，可以解释为三个频段都使用某一信道进行打分，最终选择分数最高信道所对应的频段。）
+
+​	抽象到模型的话，其实只需要考虑每个连接方式一个打分（有线，无线，MLO）
+
+挖掘：同一时间多个值说明要进行信道选择了，什么情况下会进行信道选择呢？用户离开网络并返回（可以做用户行为分析），网络的定期切换最优信道
 
 ![Screen Shot 2024-08-10 at 11.33.55](img/posts/QoE对比Plume与Tauc.asserts/Screen Shot 2024-08-10 at 11.33.55.png)
 
 ![image-20240810100957419](img/posts/QoE对比Plume与Tauc.asserts/image-20240810100957419.png)
 
-具体而言不太理解为什么iPhone手机会同一个时间出现三个点（MAC: 7A:99:C2:65:AA:05）
-
-然后average qoe score只能筛选在线设备的avg score，离线设备即便qoe得分avg=5也不显示。
-
-然后在线设备和离线设备没有很明显的区分。
-
-![image-20240810133526835](img/posts/QoE对比Plume与Tauc.asserts/image-20240810133526835.png)
-
-然后短屏的交互比较难看。
+可优化点：average qoe score只能筛选在线设备的avg score，离线设备即便qoe得分avg=5也不显示。在线设备和离线设备没有很明显的区分。
 
 
 
-## Node
+### Node
 
-这个部分鸡贼的只显示controller-agent链路中agent的得分。
+这个部分对应我司的AP-data部分，但只显示controller-agent链路中agent的得分。（我们还有controller的数据和有线agent数据）
 
-ap和sta的有线部分plume都没有做显示，而这些数据我们是有的。
-
-ap显示每个路由器设备端指标信息，对应我司的ap-data
+该表指标细粒度都是Per Ap Per Radio，Plume的呈现为在信道切换时会展示每个信道的值，否则一般而言只呈现工作信道的值。
 
 ![image-20240810111345692](img/posts/QoE对比Plume与Tauc.asserts/image-20240810111345692.png)
 
 ![image-20240810111421687](img/posts/QoE对比Plume与Tauc.asserts/image-20240810111421687.png)
 
-这两部分评分没有太多实际意义，对应的是休息时间，然后要说明休息时间是channel繁忙和信号差的不太合适。然后这里plume也不太能区分开radio和channel的名字。
+
 
 ![image-20240810140106596](img/posts/QoE对比Plume与Tauc.asserts/image-20240810140106596.png)
-
-但另外一方面，他们所有的图，一般曲线断开都是说明做了信道切换，很直接。各个浅蓝色绘图的指标上都会带上channel信息，也会显示出信道改变。但最底下predicted throughput没有显示这一特征，可能是因为开发浅蓝色的开发者离职。
-
-并且online和channel和其他曲线没对齐，可能前端也离职了。
-
-数据表示7:30pm和4:15am进行了两次信道切换。
 
 ![image-20240810133748004](img/posts/QoE对比Plume与Tauc.asserts/image-20240810133748004.png)
 
@@ -58,43 +78,17 @@ airtime部分，rx为0，tx很小，这些都很奇怪？
 
 
 
-### Recommendation Engine
+### Live Mode
 
-点击后会进入live mode，但是和直接enable live mode没有区别。
-
-![image-20240810134143264](img/posts/QoE对比Plume与Tauc.asserts/image-20240810134143264.png)
-
-live mode对于plume而言可以直接加1天。
+支持分钟级和秒级 Live Mode，Per Ap 和Per Sta都使用相同的字段组
 
 ![image-20240810134303798](img/posts/QoE对比Plume与Tauc.asserts/image-20240810134303798.png)
 
-这个切rssi和ss的时候threshold没有改变，应该改变。
-
-![image-20240810134402070](img/posts/QoE对比Plume与Tauc.asserts/image-20240810134402070.png)
-
-通过向上滑动图片可以实现时间轴放大，下滑图片时间轴缩小。（其实可以多图联动）
 
 
+### Device
 
-### Super Live Mode
-
-![image-20240810134546007](img/posts/QoE对比Plume与Tauc.asserts/image-20240810134546007.png)
-
-可以看到这应该是一个新功能，半屏时交互没做好
-
-这个功能目前还比较简单，比如筛选出来的设备可能就不在线，然后一次只能看一个设备的一个指标，虽然这些数据在进入super live mode之后都开始收集了，但是只能上传一个。![image-20240810135131963](img/posts/QoE对比Plume与Tauc.asserts/image-20240810135131963.png)
-
-注意右侧的数据中断点，这个设备届时数据链路断链了一下。
-
-然后这个super live mode可以实现1s 2s 5s 10s的采样。
-
-然后livemode是一个单独的页面，跟原有数据页面无法交互，但至少退出去之后再重新进来livemode数据仍然存在。
-
-最快1秒1条数据，但目前卡了时间bug，每次都是重新计时14分钟，然后日期可以加一天，但我印象里他们应该没有我们有钱？
-
-
-
-## sta
+Per Client
 
 显示每个终端设备端指标信息。
 
@@ -128,15 +122,245 @@ live mode对于plume而言可以直接加1天。
 
 
 
-## wan口
+### WAN口
 
-显示tx rx方向每天的最大值，虽然我不理解为什么只能显示30天以及最近两周没有数据。
+粒度 Per Network
 
-![image-20240810111700787](img/posts/QoE对比Plume与Tauc.asserts/image-20240810111700787.png)
+显示tx rx方向的最大值，以及总量的
+
+数据粒度：每15分钟，每小时，每天，每分钟（Live Mode）
+
+![image-20250304151158384](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250304151158384.png)
+
+Health Check部分有Wan的另一项指标。
+
+![image-20250304180735540](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250304180735540.png)
+
+
 
 然后开通livemode之后就只显示按分钟测量的这些数值的值，按d/7d/30d就是求每个聚合数据的最大值。
 
+## 其他界面
 
+### TimeLine
+
+![image-20250314111907954](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250314111907954.png)
+
+记录了网络下channel改变的历史记录
+
+包括设备，行为，触发原因等信息
+
+
+
+### SpeedTest
+
+![image-20250314112353863](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250314112353863.png)
+
+包含Controller的测速信息
+
+### Profile
+
+![image-20250314135337773](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe竞品/img/posts/QoE对比Plume与Tauc.asserts/image-20250314135337773.png)
+
+根据上传，下载速度排序的设备
+
+Client设备类型
+
+Wan Usage
+
+## 表总结
+
+### 实时状态表
+
+Per Ap Per Radio 实时状态
+
+（类比到Network的话算在Network表里，表征该设备当前时段的基本网络信息）
+
+| 名称     | Eg       | 解释                   | Opensync来源 | Controller |
+| -------- | -------- | ---------------------- | ------------ | ---------- |
+| 天线组   | 2x2      | 分别表示 Tx Rx天线数量 |              | 有         |
+| Wifi协议 | 802.11ax | wifi协议标准为802.11ax |              | 有         |
+| 信道     | Ch 11    | 使用的信道             |              | 有         |
+| 信道带宽 | Width 20 | 信道带宽               |              | 有         |
+
+Per Ap 实时状态
+
+| 名称             | Eg   | 解释                               | Opensync来源 | Controller |
+| ---------------- | ---- | ---------------------------------- | ------------ | ---------- |
+| Device Type      |      |                                    |              | 有         |
+| Firmware Version |      |                                    |              | 有         |
+| Mac              |      |                                    |              | 有         |
+| IP               |      |                                    |              | 有         |
+| IPv6             |      |                                    |              | 有         |
+| Public IP        |      |                                    |              | 有         |
+| Connected Device |      | 子表，含RSSI，频段，打分           |              | 有         |
+| Connection       |      | 和Controller的连接状态打分，RSSI， |              | 无         |
+| Interference     |      | 疑似backhaul                       |              | 无         |
+| Health Rating    |      | 疑似backhaul                       |              | 无         |
+
+
+
+### 事实表（History）
+
+Per Network/Wan
+
+|                     |                                                              |
+| ------------------- | ------------------------------------------------------------ |
+| txMbps              |                                                              |
+| rxMbps              |                                                              |
+| txMaxMbps           |                                                              |
+| rxMaxMbps           |                                                              |
+| Wan Saturation Up   | 当前txMaxMbps/rxMaxMbps，相对于最近的ISP速度测试结果的比值。 |
+| Wan Saturation Down |                                                              |
+
+Per Ap
+
+|                 |              |
+| --------------- | ------------ |
+| CPU utilization |              |
+| Memory Usage    |              |
+| Uptime          | 持续在线时间 |
+
+Per Ap Per Radio
+
+|                    |                                                              | Opensync | 推测实现 |
+| ------------------ | ------------------------------------------------------------ | -------- | -------- |
+| Radio Temperature  | **Wi-Fi 设备的射频模块（无线电）的温度**，单位是 **摄氏度（°C）**。 | 原始字段 |          |
+| Channel Congestion | 包含75% Interference 和75% Total                             | ？       |          |
+
+Per Non-Controller Ap Per Radio
+
+（部分数据在Tauc这边是Controller设备也有的）
+
+|                            | 定义                                                         | 应用                                               | 推测实现 | tauc支持                                  | 备注 |
+| -------------------------- | ------------------------------------------------------------ | -------------------------------------------------- | -------- | ----------------------------------------- | ---- |
+| Phy Rate Efficiency(RX,TX) | PHY（物理层）速率效率指的是 **实际传输速率** 与 **理论最高 PHY 速率** 的比值。 |                                                    |          |                                           |      |
+| 加权Qoe分数                |                                                              |                                                    |          |                                           |      |
+| RSSI History               |                                                              |                                                    |          | Plume支持原始SS和RSSI计算，Tauc只展示RSSI |      |
+| Packet Retry Rate(RX,TX)   | 数据包重传率（Packet Retry Rate）衡量了无线链路的质量，表示**总数据包中发生重传的数据包的比例**。 |                                                    |          |                                           |      |
+| Average Airtime(TX,RX)     | Airtime 表示数据在无线信道上的 **占用时间**，用于衡量 AP 或 STA 发送和接收数据所花费的时间。 | **高 Airtime 占用** 可能意味着信道拥塞或低效传输。 |          |                                           |      |
+| Channel Utilization        | 信道利用率（Channel Utilization）表示信道上的总占用情况，包括**Wi-Fi 设备和非 Wi-Fi 设备的干扰**。 |                                                    |          |                                           |      |
+| Busy Ratio                 |                                                              |                                                    |          |                                           |      |
+| Predicted Throughput       |                                                              |                                                    |          |                                           |      |
+| Online                     |                                                              |                                                    |          |                                           |      |
+| Channel                    |                                                              |                                                    |          |                                           |      |
+| Bandwidth Usage            |                                                              |                                                    | ？       |                                           |      |
+
+Per Client
+
+|                            | 定义                                                         | 应用                                               | 推测实现 | tauc支持                                  | 备注               |
+| -------------------------- | ------------------------------------------------------------ | -------------------------------------------------- | -------- | ----------------------------------------- | ------------------ |
+| Data Consumption           | 分上传，下载，总量                                           |                                                    |          |                                           | 和Node相比新增字段 |
+| Connectivity Score         |                                                              |                                                    |          |                                           | 和Node相比新增字段 |
+| RSSI History               |                                                              |                                                    |          | Plume支持原始SS和RSSI计算，Tauc只展示RSSI |                    |
+| 加权Qoe分数                |                                                              |                                                    |          |                                           |                    |
+| Phy Rate Efficiency(RX,TX) | PHY（物理层）速率效率指的是 **实际传输速率** 与 **理论最高 PHY 速率** 的比值。 |                                                    |          |                                           |                    |
+| Packet Retry Rate(RX,TX)   | 数据包重传率（Packet Retry Rate）衡量了无线链路的质量，表示**总数据包中发生重传的数据包的比例**。 |                                                    |          |                                           |                    |
+| Average Airtime(TX,RX)     | Airtime 表示数据在无线信道上的 **占用时间**，用于衡量 AP 或 STA 发送和接收数据所花费的时间。 | **高 Airtime 占用** 可能意味着信道拥塞或低效传输。 |          |                                           |                    |
+| Channel Utilization        | 信道利用率（Channel Utilization）表示信道上的总占用情况，包括**Wi-Fi 设备和非 Wi-Fi 设备的干扰**。 |                                                    |          |                                           |                    |
+| Busy Ratio                 |                                                              |                                                    |          |                                           |                    |
+| Predicted Throughput       |                                                              |                                                    |          |                                           |                    |
+| Online                     |                                                              |                                                    |          |                                           |                    |
+| Channel                    |                                                              |                                                    |          |                                           |                    |
+
+
+
+### Live Mode
+
+对于Ap 和 client 都是使用下述字段
+
+|                      | 和非Live Mode事实表相比的变化        |
+| -------------------- | ------------------------------------ |
+| Congestion           | ？（单值，非历史数据）               |
+| Qoe Score            | Need Based Score & Usage Based Score |
+| RSSI                 |                                      |
+| Utilization          |                                      |
+| Interference         |                                      |
+| Phy Rate             |                                      |
+| Packet Retry         |                                      |
+| Potential Throughput | 有潜在的throughput和当前usage        |
+
+
+
+# Panorama
+
+## Adapter
+
+可选维度
+
+|                             |                                                              |      |      |
+| --------------------------- | ------------------------------------------------------------ | ---- | ---- |
+| Data Range                  |                                                              |      |      |
+| **Tenant（租户）**          | 个人用户、企业用户、酒店/公寓、公共 Wi-Fi、运营商网络        |      |      |
+| **Tenant Type（租户类型）** | 订阅级别（免费、标准、企业）、ISP 类型（家庭 ISP、企业 ISP） |      |      |
+| **Home Type（家庭类型）**   | 独立住宅、公寓、联排别墅、高层建筑                           |      |      |
+| **Node Model（节点型号）**  | 路由器型号、Mesh Wi-Fi 设备、IoT 网关、AP 规格（Wi-Fi 6/7）  |      |      |
+| Steering Type               |                                                              |      |      |
+| Kick Type                   | 可能是指 **Wi-Fi 设备在进行 Steering（引导）时，如何”踢掉”当前的设备连接** |      |      |
+| Starting Interference %     | 起始干扰率                                                   |      |      |
+| Band                        |                                                              |      |      |
+| Trigger Type                |                                                              |      |      |
+
+
+
+|                                   | 可选维度                                                     | 可选事实                                                     | 备注                          |            |
+| --------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ----------------------------- | ---------- |
+| Band Steering Statistics          | Data Range, Tenant, Tenant Type, Home Type, Node Model       | 成功率，尝试次数                                             | Pre-Association band steering | 频段切换   |
+| Client Steering Statistic         | Data Range, Tenant, Tenant Type, Home Type, Node Model, Steering Type, Kick Type | Steering Type, 成功率                                        |                               | 信道切换   |
+| Steer Enforcement                 | Data Range, Tenant, Tenant Type, Home Type, Node Model       | 连接到2.4/5，对于MLO设备。连接到5G在设备所有时间中的占比     |                               |            |
+| Optimizer Operation               | Data Range, Tenant, Tenant Type, Home Type, Node Model       | 成功率，优化类型，优化触发类型，引起信道改变的优化占比       |                               |            |
+| Channel Change Operation          | Data Range, Tenant, Tenant Type, Home Type, Node Model       | 客户平均干扰，出现干扰的家庭，干扰优化算法效率，信道改变触发类型 |                               | （没看懂） |
+| Channel Distribution              | Data Range, Tenant, Tenant Type, Home Type, Node Model, Band | 设备连接/Ap-backhaul信道分布占比/频段占比                    |                               |            |
+| Interference Algorithm Efficiency | Data Range, Tenant, Tenant Type, Home Type, Node Model, Trigger Type, Starting Interference % | 优化后变好，变化的情况                                       |                               |            |
+
+
+
+| Steering 选项             | **作用**                                 | **适用场景**                   |      |
+| ------------------------- | ---------------------------------------- | ------------------------------ | ---- |
+| **Cloud Downsteer**       | 让设备从 5GHz 降级到 2.4GHz              | 远距离设备、信号弱的情况       |      |
+| **Cloud 2.4 to 2.4**      | 让设备在 2.4GHz AP 之间切换              | 低速 IoT 设备、需要更稳定信号  |      |
+| **Cloud**                 | 云端控制的默认 Steering 机制             | Wi-Fi 设备动态优化             |      |
+| **Cloud 5 to 5**          | 让设备在 5GHz AP 之间切换，不降到 2.4GHz | 高吞吐量设备，减少信道干扰     |      |
+| **Cloud Upsteer**         | 让设备从 2.4GHz 迁移到 5GHz              | 近距离设备、需要更快网速       |      |
+| **OpenSync Upsteer**      | OpenSync 本地控制的 Upsteer              | Mesh Wi-Fi 本地优化            |      |
+| **OpenSync Sticky Steer** | 防止设备频繁切换 AP                      | IoT 设备、智能摄像头、打印机等 |      |
+| **Cloud Speculation**     | 云端预测设备行为，优化 Steering          | AI 驱动的 Wi-Fi 调优           |      |
+
+
+
+|                       |                |
+| --------------------- | -------------- |
+| **channel gain**      | 信道增益       |
+| **fast interference** | 快速干扰检测   |
+| **forced idle**       | 强制空闲       |
+| **interrupted**       | 中断           |
+| **link discovery**    | 链路发现       |
+| **manual**            | 手动触发       |
+| **radar detected**    | 侦测到雷达信号 |
+| **retry**             | 重试           |
+| **scheduled**         | 预定任务       |
+| **topology deviated** | 拓扑偏离       |
+
+
+
+## 其他 Dashboards
+
+下述为Guard/Shield Dashboards，感觉目前TAUC尚未涉及该对标业务
+
+此外还有Customer，客户端，Performance，Nodes Points 更像是Network和Account对应业务表
+
+|                              | 可选维度                                                     | 可选事实                                                     | 案例选择                           |      |
+| ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------- | ---- |
+| Network Threats              | Tenant, Tenant Type, Deployment, Data Range, Device, Event Source, Category Name, Provider Orig, Statistics Select | Risk 类型及地图（                                            | Statistics Select选择的是Count     |      |
+| Security Threats Leaderboard | Tenant, Tenant Type, Deployment, Time, Device, Event Source, Column Selector, Provider, Threat Type |                                                              | Column Selector选择的是Event Count |      |
+| Device Threats Anal          | Tenant, Tenant Type, Deployment, Time, Device, Event Source, Column Selector, Provider, Threat Type | 有threat的设备分类，品牌分类，DNS count by Device/Threat Type | Column Selector选择的是Event Count |      |
+| AI Security Enablement       | Tenant, Tenant Type, Deployment, Trend Of                    | 某个地方通过AI来进行网络保护的类型分类                       | Trend Of选择Location               |      |
+| Protection Value             | Tenant, Tenant Type, Deployment, Time, Device, Event Source, Column Selector, Policy, Event Source |                                                              |                                    |      |
+| Whitelist Anal               | Tenant, Tenant Type, Deployment, Time, Policy, Provider, Event Type |                                                              |                                    |      |
+| ...                          |                                                              |                                                              |                                    |      |
+|                              |                                                              |                                                              |                                    |      |
+|                              |                                                              |                                                              |                                    |      |
+|                              |                                                              |                                                              |                                    |      |
 
 
 
