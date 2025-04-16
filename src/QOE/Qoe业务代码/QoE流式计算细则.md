@@ -1,20 +1,22 @@
-# 基础信息
-
-当前数据上报配置了数据间隔和上报间隔，数据间隔指设备端的两条消息之间的时间间隔，tauc允许的配置时间是15-60min；上报间隔指设备端发送http请求进行数据上报的时间间隔，tauc允许的配置是15-120min，因此单次上报是可以上报多条数据的。
-
-
-
 # 数据平台计算规划
 
 ## 整体实现方案
 
-实现规划上
+实现主体：
+
+1. 环境：完成
+2. 数据源：自测环节验证逻辑准确性
+3. Sql：实现业务的主要逻辑
+4. UDF：当前主要用于json解析
+
+实现规划
 
 |            | 规划       | 实现明细                                                     | 进度 | 计划 |
 | ---------- | ---------- | ------------------------------------------------------------ | ---- | ---- |
-| Local Demo | 功能调研   | 调研flink+starrocks架构符合现有需求，搭建本地及local环境     | 50%  |      |
-| Local Demo | 功能实现   | UDF提供input-output的映射关系，Sql提供input和output的声明并使用UDF进行转化。 | 50%  | 4E   |
-| Local Demo | 零值处理   | 上报数据不存在的情况下的默认值填充，默认值业务相关但逻辑繁琐，需要调研零值处理的放置层级。 | 0    |      |
+| Local Demo | 组件调研   | 调研flink+starrocks架构符合现有需求，搭建本地及local环境     | 50%  |      |
+| Local Demo | 功能实现   | 数据源使用全填充，UDF提供input-output的映射关系，Sql提供input和output的声明并使用UDF进行转化。 | 50%  | 4E   |
+| Local Demo | 零值处理   | 数据源输入实现部分填充，上报数据不存在的情况下的默认值填充，默认值业务相关但逻辑繁琐，需要确定零值处理的放置层级。 | 0    |      |
+| Local Demo | 监控实现   | 确定监控数据（日志，异常，告警）实现方案                     |      |      |
 | Demo       | 功能实现   | 上述Local Demo内容之和：kafka-cassandra的ap-client链路       | 15%  | 5M   |
 | Demo       | 准备工作   | 新链路评审通过后需要改造当前network-tr的部分代码以适配新架构 | 0%   |      |
 | Demo       | 环境配置   | 准备uat，pet，prd环境，性能&配置                             | 0    | 5E   |
@@ -22,26 +24,80 @@
 
 
 
+### 设计讨论
+
+1. 监控数据实现：sql实现逻辑判断，然后将异常结果按类别发送到通用处理类（Java）处理
+   1. 直接使用udf
+   2. 所有监控数据sink到kafka进行中转。
+
+
+
+
+
 # **AP-Client链路Demo**
 
-## **指标层级**
+## 指标需求类型
 
-指标计算包括下述内容：
+1. 空数据处理，正常业务链路处理
+2. 业务数据（设备，网络，isp），监控数据（日志，异常，告警）
 
-网络级，ISP级，大区级
+## **指标层级划分**
 
-空数据处理，异常监控及告警。
+### 指标层级
 
-## **数据平台计划改动项**
+ap/client -> region/isp/network/ap/radio/client/ethernet
 
-1. 优化当前指标体系：原qoe存储表仅包含ap/client两个维度的表，现将指标按region/isp/network/ap/radio/client/ethernet七个维度进行重新建表
-2. 优化计算细节：
-   1. 对于每个维度，需区分原始数据和计算后数据。
-   2. 优化当前业务侧计算不合理部分（切换sql实现可能结果会和原始业务结果不同）
+原qoe-cassandra存储表仅包含ap/client两个维度的表
+
+|                | 当前统计维度    | 备注                                   | 数据平台处理                                                 |
+| -------------- | --------------- | :------------------------------------- | ------------------------------------------------------------ |
+| ap             | Ap, Network     |                                        | 指标拆分到Radio, Ap, Network三张表                           |
+| client         | Ap.Radio.Client |                                        | 指标拆分到Client, Ethernet两张表                             |
+| throughput     | Ap              | 一天只测量3次，但存了96条              | Ap表(dt=raw)                                                 |
+| client_roaming | Ap.Radio.Client | 并非每个client每次都有roaming现象      | ❓暂定使用体系外的roaming表，如后续有值占比超过30%则转化到Client表 |
+| speed_test     | Ap              | 一天只测量3次，内容同throughput，存1条 | Ap表(dt=1d)                                                  |
+
+现将指标按region/isp/network/ap/radio/client/ethernet七个维度进行重新建表
+
+| **维度层级**                         | **维度划分可用字段** |                                                      |
+| ------------------------------------ | -------------------- | ---------------------------------------------------- |
+| Region                               | Per Region           | （ECO等设备端指标）                                  |
+| Region.Isp                           | Per Isp              | （alarm相关指标）                                    |
+| Region.Isp.Network                   | Per Network          | 一个network一条数据                                  |
+| Region.Isp.Network.Ap                | Per AP               | 一个ap一条数据                                       |
+| Region.Isp.Network.Ap.Radio          | Ap.Radio             | 一个ap下每个Radio一条的数据                          |
+| Region.Isp.Network.Ap.Radio.Client   | Ap.Radio.Client      | 每个client一条的数据，可向上聚合到Network/Ap/Radio层 |
+| Region.Isp.Network.Ap.EthernetClient | EthernetClient       | 每个有线客户端一条的数据                             |
+
+### 时间层级
+
+|        |                |                                                |
+| ------ | -------------- | ---------------------------------------------- |
+| dt=raw | 原始数据       |                                                |
+| dt=1h  | 按小时聚合数据 | 可从原始数据聚合                               |
+| dt=1d  | 按天聚合数据   | 可从原始数据或按小时聚合的数据聚合             |
+| dt=1m  | 按月聚合数据   | 可从原始数据或按小时或按天聚合的数据聚合       |
+| dt=1y  | 按年聚合数据   | 可从原始数据或按小时或按天或按月聚合的数据聚合 |
+
+eg，throughput和speed_test就是同一张表在不同时间层级上的表现
+
+
+
+## **具体实现**
+
+### 基础信息
+
+当前数据上报配置了数据间隔和上报间隔，数据间隔指设备端的两条消息之间的时间间隔，tauc允许的配置时间是15-60min；上报间隔指设备端发送http请求进行数据上报的时间间隔，tauc允许的配置是15-120min，因此单次上报是可以上报多条数据的。
+
+
+
+### 与微服务实现对比
+
+1. 维度层级变更
+2. 对于每个维度，需区分原始数据和计算后数据
+3. 优化当前业务侧计算不合理部分（切换sql实现可能结果会和原始业务结果不同）
 
 ![image-20250415101050614](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe业务代码/img/posts/QoE流式计算细则.asserts/image-20250415101050614.png)
-
-
 
 |      | Source                    | Sink                    | Duty                                               |
 | ---- | ------------------------- | ----------------------- | -------------------------------------------------- |
@@ -56,39 +112,56 @@
 | 9    | client_data_view_inner1   | client_data_view_inner2 | 使用client_inner1的计算结果进行计算的指标          |
 |      |                           |                         |                                                    |
 
+#### 内存存储时间设置
+
 对于1，后续计划转化到微服务进行，aka http请求到达后将多条数据而非单条发送到Kafka，以节省kafka资源。
 
 当前步骤2的匹配规则为collect_time + tr_id，flink需要在内存存储覆盖上报间隔的所有数据，如果上述规划成立，步骤2进行ap和client匹配将不再使用collect_time，而是统一使用单次http请求过来的最新时间，并对tr_id按照不同collect_time进行重新编号。
 
+当前匹配方案：collect_time +tr_id，会需要存储至少120分钟的数据到内存。
+
+计划更新的匹配方案：单次上报的record 1,2,3,4，使用最新一条record的时间，然后在tr_id后缀编号。假设10:50在处理 10:00/10:15/10:30/10:45的四条数据，那么内存中只需要允许存放10:45的数据即可，而非扩展到2H以上。
+
+
+
+#### 同名字段处理
+
+对于步骤6，已明确对WANBandwidth, WANThroughput, Utilization的解析过程中，ap和client均有该字段，经和设备端沟通，两个同名字段表达含义相同，可视作相同内容。为方便考虑还是解析client的对应字段。
+
+
+
+
+
+#### sql计算层级描述
+
 对于步骤9，具体的case是步骤8会使用signal_strength计算rssi，步骤9会在新的view根据rssi计算snr及client_coverage_qoe_score。
 
+计算层级划分
 
+|      |                                    |                                                              |                  |
+| ---- | ---------------------------------- | ------------------------------------------------------------ | ---------------- |
+| dwd  | 直接使用，变化后指标含义不变       | 变量类型转换，不同数据类型格式对齐（如band的2.4，2.4G，2.4GHz对齐），单位变化（时间戳10->13） | 可放置到udf执行❓ |
+| dwm1 | 原始数据进行单原子计算             | 输入为（比如rssi和                                           | sql              |
+| dwm2 | 原始数据同维度层多指标计算出新指标 | 例如snr=rssi-noise                                           | sql              |
+| dwm3 | 原始数据进行跨维度层指标计算       | 例如client数据聚合到ap维度                                   | sql              |
 
-## **具体实现**
+![image-20250416150732511](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe业务代码/img/posts/QoE流式计算细则.asserts/image-20250416150732511.png)
+
+#### 空值处理
 
 client的未解析字段（涉及二级指标无法计算）
 
 per: errorsSent, errorReceived, packetsReceived, packetsSent不存在
 
-utilization：刘园春确认ap和client重复上报
-
 clienttype：uat和prd检测未上报
 
-新增对wanBandwidth, wanThroughput的解析，（此两字段与ap相同，但结果用于计算client维度的avl_bandwidth），既然ap和client相同的话，直接解析ap的字段是否更好？
-
- interfacetype暂未处理
+interfacetype暂未处理
 
 
 
-# **当前分数计算整理**
 
-## **通用细节**
 
-空数据处理默认为后续字段为空，为空的定义为对于String类型，"", " ", null三类均为空
-
-采用数据默认使用的是Qoe上报的原始数据，如果使用的是中间计算数据会特殊声明
-
- 
+#### 5、时间层级
 
 SpeedTestWifiQualityDAO throughput数据每天只测量3次。
 
@@ -102,6 +175,18 @@ Collect_time降序排列，因此selectOne选取的是时间最新的一条
 
 @PrimaryKeyColumn(name = ClientWifiQualityFields.COLLECT_TIME, ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)private Date collectTime;
 
+
+
+# **当前分数计算整理**
+
+## **通用细节**
+
+空数据处理默认为后续字段为空，为空的定义为对于String类型，"", " ", null三类均为空
+
+采用数据默认使用的是Qoe上报的原始数据，如果使用的是中间计算数据会特殊声明
+
+ 
+
  
 
  
@@ -111,47 +196,6 @@ Collect_time降序排列，因此selectOne选取的是时间最新的一条
 维度划分：
 
 1. 优化当前指标体系：
-
-原qoe-cassandra存储表仅包含ap/client两个维度的表
-
-|                | 当前统计维度    | 备注                                   | 数据平台处理                                              |
-| -------------- | --------------- | :------------------------------------- | --------------------------------------------------------- |
-| ap             | Ap, Network     |                                        | 指标拆分到Radio, Ap, Network三张表                        |
-| client         | Ap.Radio.Client |                                        | 指标拆分到Client, Ethernet两张表                          |
-| throughput     | Ap              | 一天只测量3次，但存了96条              | Ap表(dt=raw)                                              |
-| client_roaming | Ap.Radio.Client | 并非每个client每次都有roaming现象      | ❓暂定使用roaming表，如后续有值占比超过30%则转化到Client表 |
-| speed_test     | Ap              | 一天只测量3次，内容同throughput，存1条 | Ap表(dt=1d)                                               |
-
-现将指标按region/isp/network/ap/radio/client/ethernet七个维度进行重新建表
-
-| **维度层级**                         | **维度划分可用字段** |                                                      |
-| ------------------------------------ | -------------------- | ---------------------------------------------------- |
-| Region                               | Per Region           | （ECO等设备端指标）                                  |
-| Region.Isp                           | Per Isp              | （alarm相关指标）                                    |
-| Region.Isp.Network                   | Per Network          | 一个network一条数据                                  |
-| Region.Isp.Network.Ap                | Per AP               | 一个ap一条数据                                       |
-| Region.Isp.Network.Ap.Radio          | Ap.Radio             | 一个ap下每个Radio一条的数据                          |
-| Region.Isp.Network.Ap.Radio.Client   | Ap.Radio.Client      | 每个client一条的数据，可向上聚合到Network/Ap/Radio层 |
-| Region.Isp.Network.Ap.EthernetClient | EthernetClient       | 每个有线客户端一条的数据                             |
-
-层级划分
-
-|      |                                    |                                                              |
-| ---- | ---------------------------------- | ------------------------------------------------------------ |
-| dwd  | 直接使用，变化后指标含义不变       | 变量类型转换，不同数据类型格式对齐（如band的2.4，2.4G，2.4GHz对齐），单位变化 |
-| dwm1 | 原始数据进行单原子计算             | 输入与输出均为单一指标（指标含义不同，如utilization与        |
-| dwm2 | 原始数据同维度层多指标计算出新指标 | 例如snr=rssi-noise                                           |
-| dwm3 | 原始数据进行跨维度层指标计算       | 例如client数据聚合到ap维度                                   |
-
-时间划分
-
-|        |                |                                                |
-| ------ | -------------- | ---------------------------------------------- |
-| dt=raw | 原始数据       |                                                |
-| dt=1h  | 按小时聚合数据 | 可从原始数据聚合                               |
-| dt=1d  | 按天聚合数据   | 可从原始数据或按小时聚合的数据聚合             |
-| dt=1m  | 按月聚合数据   | 可从原始数据或按小时或按天聚合的数据聚合       |
-| dt=1y  | 按年聚合数据   | 可从原始数据或按小时或按天或按月聚合的数据聚合 |
 
 结果表来源
 
