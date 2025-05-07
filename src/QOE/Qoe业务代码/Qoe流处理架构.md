@@ -2,13 +2,91 @@
 
 
 
-![image-20250414145409233](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe业务代码/img/posts/Qoe流处理架构.asserts/image-20250414145409233.png)
+![image-20250414145409233](./img/posts/Qoe流处理架构.asserts/image-20250414145409233.png)
+
+
+
+## 环境配置
+
+### 整体组件配置
+
+```
+flink/
+├── docker-compose.yml           ← 启动 Kafka + Flink + Producer
+├── Dockerfile                   ← 自定义 Flink (1.14.3 + Python)
+│
+├── producer/                    ← Producer 服务
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── producer.py
+│
+└── qoe-flink-job/               ← PyFlink 作业代码（无需 Dockerfile）
+    ├── run_job.py               ← 入口脚本
+    ├── sql/
+    │   ├── 01-create-qoe_raw.sql
+    │   ├── 02-create-qoe_json.sql
+    │   ├── 03-insert-qoe_json.sql
+    │   ├── 04-create-joined_qoe.sql
+    │   └── 05-insert-joined_qoe.sql
+    └── udf/
+        └── parse_qoe_raw.py
+```
+
+
+
+Dockerfile
+
+```
+COPY lib/ /opt/flink/lib/
+```
+
+docker-compose.yml
+
+```yaml
+  flink-jobmanager:
+    image: my-flink:1.17.1
+    container_name: flink-jobmanager
+    hostname: flink-jobmanager
+    command: jobmanager
+    ports:
+      - "8081:8081"
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    volumes:
+      - ./qoe-flink-job:/opt/flink/jobs
+      - ./flink-conf.yaml:/opt/flink/conf/flink-conf.yaml
+      - ./core-site.xml:/opt/flink/conf/core-site.xml
+      - ./plugins:/opt/flink/plugins
+      - /Users/sunhao/IdeaProjects/SqlJob/target:/opt/flink/jars
+    depends_on:
+      - kafka
+      - minio
+```
+
+修改了flink-conf.yaml, core-site.xml, plugins, lib 以便搭建简单的运行环境，也便于标准化部署到eks（如有必要）。
+
+
+
+### 使用java的实现版本
+
+执行所有sql命令
+
+```shell
+docker exec -it flink-jobmanager bash -c "./bin/sql-client.sh --jar /opt/flink/jars/SqlJob-1.0.5-SNAPSHOT.jar -f /opt/flink/jobs/sql/qoe-all.sql"
+```
+
+起停flink集群
+
+```shell
+docker-compose stop flink-jobmanager flink-taskmanager 
+docker-compose up -d flink-jobmanager flink-taskmanager
+```
 
 
 
 
 
-
+## 代码样例
 
 ### 配置信息
 

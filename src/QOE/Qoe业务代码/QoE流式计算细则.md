@@ -97,7 +97,7 @@ eg，throughput和speed_test就是同一张表在不同时间层级上的表现
 2. 对于每个维度，需区分原始数据和计算后数据
 3. 优化当前业务侧计算不合理部分（切换sql实现可能结果会和原始业务结果不同）
 
-![image-20250415101050614](/Users/sunhao/Documents/IdeaProjects/typora/src/QOE/Qoe业务代码/img/posts/QoE流式计算细则.asserts/image-20250415101050614.png)
+![image-20250415101050614](./img/posts/QoE流式计算细则.asserts/image-20250415101050614.png)
 
 |      | Source                    | Sink                    | Duty                                               |
 | ---- | ------------------------- | ----------------------- | -------------------------------------------------- |
@@ -156,6 +156,14 @@ per: errorsSent, errorReceived, packetsReceived, packetsSent不存在
 clienttype：uat和prd检测未上报
 
 interfacetype暂未处理
+
+
+
+ap的未解析字段
+
+ap_retry_rate_tx（backhaul内，业务确认不存在该值）
+
+
 
 
 
