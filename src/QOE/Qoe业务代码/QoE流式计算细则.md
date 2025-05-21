@@ -409,7 +409,10 @@ Collect_time降序排列，因此selectOne选取的是时间最新的一条
 代码描述
 
 ```plaintext
-SELECT  CASE    WHEN backhaulRssi > -40.0 AND backhaulRssi < 0.0 THEN 5.0    WHEN backhaulRssi > -50.0 AND backhaulRssi <= -40.0 THEN 4.5    WHEN backhaulRssi > -60.0 AND backhaulRssi <= -50.0 THEN 4.0    WHEN backhaulRssi > -65.0 AND backhaulRssi <= -60.0 THEN 3.5    WHEN backhaulRssi > -70.0 AND backhaulRssi <= -65.0 THEN 3.2    WHEN backhaulRssi > -75.0 AND backhaulRssi <= -70.0 THEN 3.0    WHEN backhaulRssi > -80.0 AND backhaulRssi <= -75.0 THEN 2.5    WHEN backhaulRssi > -85.0 AND backhaulRssi <= -80.0 THEN 1.5    WHEN backhaulRssi > -90.0 AND backhaulRssi <= -85.0 THEN 1.0    WHEN backhaulRssi <= -90.0 THEN 0.5  END * 20 AS backhaulQoeScoreFROM your_table;下述为计算Jitter_Score_Inner 和 Delay_Score_Inner的过程SELECT  CASE    WHEN jitter > 50 THEN 50    WHEN jitter > 30 THEN 60    WHEN jitter > 10 THEN 70    WHEN jitter > 5  THEN 90    WHEN jitter >= 0 THEN 100    ELSE 0  -- 原代码的初始值  END AS jitter_score,   CASE    WHEN latency > 200 THEN 50    WHEN latency > 150 THEN 70    WHEN latency > 100 THEN 80    WHEN latency > 50  THEN 90    WHEN latency >= 0  THEN 100    ELSE 0  -- 原代码的初始值  END AS delay_score FROM your_table;SELECT   CASE    WHEN rssi IS NULL OR retry_rate IS NULL THEN 5.0    WHEN rssi >= -40.0 THEN 5.0    WHEN rssi >= -50.0 AND rssi <= -40.0 THEN 4.5    WHEN rssi >= -60.0 AND rssi <= -50.0 THEN 4.0    WHEN rssi >= -65.0 AND rssi <= -60.0 THEN 3.5    WHEN rssi >= -70.0 AND rssi <= -65.0 THEN 3.2    WHEN rssi >= -75.0 AND rssi <= -70.0 THEN 3.0    WHEN rssi >= -80.0 AND rssi <= -75.0 THEN 2.5    WHEN rssi >= -85.0 AND rssi <= -80.0 THEN 1.5    WHEN rssi >= -90.0 AND rssi <= -85.0 THEN 1.0    WHEN rssi <= -90.0 AND retry_rate <= 50.0 THEN 0.5    ELSE 0.0  END AS client_coverage_qoe_scoreFROM your_table;   
+SELECT  CASE    WHEN backhaulRssi > -40.0 AND backhaulRssi < 0.0 THEN 5.0    WHEN backhaulRssi > -50.0 AND backhaulRssi <= -40.0 THEN 4.5    WHEN backhaulRssi > -60.0 AND backhaulRssi <= -50.0 THEN 4.0    WHEN backhaulRssi > -65.0 AND backhaulRssi <= -60.0 THEN 3.5    WHEN backhaulRssi > -70.0 AND backhaulRssi <= -65.0 THEN 3.2    WHEN backhaulRssi > -75.0 AND backhaulRssi <= -70.0 THEN 3.0    WHEN backhaulRssi > -80.0 AND backhaulRssi <= -75.0 THEN 2.5    WHEN backhaulRssi > -85.0 AND backhaulRssi <= -80.0 THEN 1.5    WHEN backhaulRssi > -90.0 AND backhaulRssi <= -85.0 THEN 1.0    WHEN backhaulRssi <= -90.0 THEN 0.5  END * 20 AS backhaulQoeScoreFROM your_table;
+
+下述为计算Jitter_Score_Inner 和 Delay_Score_Inner的过程SELECT  CASE    WHEN jitter > 50 THEN 50    WHEN jitter > 30 THEN 60    WHEN jitter > 10 THEN 70    WHEN jitter > 5  THEN 90    WHEN jitter >= 0 THEN 100    ELSE 0  -- 原代码的初始值  END AS jitter_score,   CASE    WHEN latency > 200 THEN 50    WHEN latency > 150 THEN 70    WHEN latency > 100 THEN 80    WHEN latency > 50  THEN 90    WHEN latency >= 0  THEN 100    ELSE 0  -- 原代码的初始值  END AS delay_score FROM your_table;SELECT   CASE    WHEN rssi IS NULL OR retry_rate IS NULL THEN 5.0    WHEN rssi >= -40.0 THEN 5.0    WHEN rssi >= -50.0 AND rssi <= -40.0 THEN 4.5    WHEN rssi >= -60.0 AND rssi <= -50.0 THEN 4.0    WHEN rssi >= -65.0 AND rssi <= -60.0 THEN 3.5    WHEN rssi >= -70.0 AND rssi <= -65.0 THEN 3.2    WHEN rssi >= -75.0 AND rssi <= -70.0 THEN 3.0    WHEN rssi >= -80.0 AND rssi <= -75.0 THEN 2.5    WHEN rssi >= -85.0 AND rssi <= -80.0 THEN 1.5    WHEN rssi >= -90.0 AND rssi <= -85.0 THEN 1.0    WHEN rssi <= -90.0 AND retry_rate <= 50.0 THEN 0.5    ELSE 0.0  END AS client_coverage_qoe_scoreFROM your_table;   
+
 
 
 private Double caculateWifiCoverageScoreOnBandtype(Double rssi) {        Double wifiCoverageScoreOnBandtype = 0.0;        if (rssi > -30.0) {            wifiCoverageScoreOnBandtype = 5.0;        }        if (rssi > -50.0 && rssi <= -30.0) {            wifiCoverageScoreOnBandtype = 4.0 + (rssi + 50) / 20;        }        if (rssi > -60.0 && rssi <= -50.0) {            wifiCoverageScoreOnBandtype = 3.0 + (rssi + 60) / 10;        }        if (rssi > -70.0 && rssi <= -60.0) {            wifiCoverageScoreOnBandtype = 2.0 + (rssi + 70) / 10;        }        if (rssi > -90.0 && rssi <= -70.0) {            wifiCoverageScoreOnBandtype = 1.0 + (rssi + 90) / 20;        }        if (rssi <= -90.0) {            wifiCoverageScoreOnBandtype = 0.0;        }        return wifiCoverageScoreOnBandtype;    }    
@@ -440,3 +443,13 @@ public static Double calTotalBackhaulQoeScore(Double backhaulRssi, Boolean isQca
 代码版本参考Release-1.8.1
 
 文档参考 [BBA 3.0平台QoE 1.0评分细则.doc](https://pdconfluence.tp-link.com/download/attachments/97004607/BBA 3.0平台QoE 1.0评分细则.doc?version=1&modificationDate=1742783702199&api=v2)
+
+
+
+
+
+
+
+标明申请人职位、工资、工作年限、年假或单位缺席许可，以及签字人身份及职位的工作单位证明， 持章公司公章的公司
+
+注册执照副本 或 公司营业执照或机构法人代表证明 。根据这个给一份在职证明文档
